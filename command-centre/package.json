@@ -1,0 +1,25 @@
+{
+  "name": "cityvigilance",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "CityVigilance command centre: sample camera stream, crowd, weapon, accident, and traffic models, screen-only deploy.",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5173",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 5173",
+    "test": "node --experimental-strip-types --test src/pipeline/desk.test.ts"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^4.4.1",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
+  }
+}

@@ -1,0 +1,5 @@
+# Notebook bench only. The sample models use the Python standard library.
+# Jupyter is here so the notebooks can be opened and run.
+jupyterlab==4.4.9
+nbclient==0.10.2
+ipykernel==6.30.1
