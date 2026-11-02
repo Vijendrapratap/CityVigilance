@@ -21,7 +21,7 @@ export function DepartmentBoard({
       <header className="board-intro">
         <h2>Departments</h2>
         <p>
-          Each department opens its own module. Upload a clip for that use case, run that module, then take the result to the command desk.
+          Each department opens its own module. A showcase clip is already loaded for crowd, traffic, and a road collision. Open the module, load that clip, and run it. You can also choose a video of your own.
         </p>
         <p className="service" data-ready={health?.ready ? "yes" : "no"}>
           {service}

@@ -466,6 +466,8 @@ h1 { font-size: 22px; font-weight: 650; letter-spacing: -0.02em; }
 .clip { width: 100%; max-height: 360px; background: #0c1014; border-radius: 4px; }
 .review-clip { margin: 0 12px 8px; max-height: 180px; }
 .drop-hint { color: var(--muted); }
+.clip-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.credit { color: var(--muted); font-size: 12px; margin: 0; }
 .upload {
   display: inline-flex;
   align-items: center;

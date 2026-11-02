@@ -25,7 +25,13 @@ npm run dev
 
 Open http://127.0.0.1:5173
 
-The first screen is the four departments. Open one module, upload a short clip for that use case, and run it. **Open on the desk** shows that camera with the clip instead of the sample numbers.
+The first screen is the four departments. Open one module and choose **Load showcase clip**, or upload a clip of your own, then run it. **Open on the desk** shows that camera with the clip instead of the sample numbers.
+
+Showcase clips, kept under their original licences in `command-centre/public/showcase/`:
+
+- **Crowd and weapon:** people on the Sabana Grande boulevard, Caracas. Vicente Quintero, CC BY 3.0.
+- **Traffic:** Link Road, Cuttack. Subhashish Panigrahi, CC BY-SA 3.0.
+- **Accident:** a truck collision on the A1. CaughtOnDashcamOrCCTV, CC BY 3.0. The accident model still leaves the decision with the officer.
 
 - **Police** and **Event security** share the crowd camera. Crowd count is people the detector can separate. Weapon check does not invent a blade: no weapon model is loaded, so the officer watches the clip.
 - **Traffic** counts vehicles in the frame and stores a proof-of-concept green time. It does not measure queue metres and it does not change a signal.

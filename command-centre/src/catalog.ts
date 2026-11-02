@@ -90,6 +90,35 @@ export const MODULES: Record<ModelId, ModuleInfo> = {
   },
 };
 
+export type ShowcaseClip = {
+  href: string;
+  title: string;
+  credit: string;
+};
+
+export const SHOWCASE: Record<ModelId, ShowcaseClip> = {
+  crowd: {
+    href: "/showcase/crowd.mp4",
+    title: "Sabana Grande boulevard",
+    credit: "Vicente Quintero, CC BY 3.0, via Wikimedia Commons",
+  },
+  weapon: {
+    href: "/showcase/crowd.mp4",
+    title: "Sabana Grande boulevard",
+    credit: "Vicente Quintero, CC BY 3.0, via Wikimedia Commons",
+  },
+  traffic: {
+    href: "/showcase/traffic.mp4",
+    title: "Link Road, Cuttack",
+    credit: "Subhashish Panigrahi, CC BY-SA 3.0, via Wikimedia Commons",
+  },
+  accident: {
+    href: "/showcase/road.mp4",
+    title: "Truck collision on the A1",
+    credit: "CaughtOnDashcamOrCCTV, CC BY 3.0, via Wikimedia Commons",
+  },
+};
+
 export function departmentById(id: DepartmentId): Department {
   const found = DEPARTMENTS.find((department) => department.id === id);
   if (!found) throw new Error(`Unknown department ${id}`);

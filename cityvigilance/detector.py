@@ -14,7 +14,7 @@ import numpy as np
 MODEL_PATH = Path(__file__).resolve().parent / "models" / "yolov8n.onnx"
 MODEL_URL = "https://huggingface.co/Kalray/yolov8/resolve/main/yolov8n.onnx"
 INPUT_SIZE = 640
-CONFIDENCE = 0.40
+CONFIDENCE = 0.25
 IOU = 0.45
 
 # COCO indexes this desk knows how to count. Other classes are ignored.

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { analyzeClip, type AnalyzeResult } from "../analyzeClient";
-import { departmentById, MODULES, type DepartmentId } from "../catalog";
+import { departmentById, MODULES, SHOWCASE, type DepartmentId } from "../catalog";
 import type { ModelId } from "../pipeline/types";
 
 export function ModuleStudio({
@@ -28,13 +28,30 @@ export function ModuleStudio({
 }) {
   const department = departmentById(departmentId);
   const module = MODULES[moduleId];
+  const showcase = SHOWCASE[moduleId];
   const [running, setRunning] = useState(false);
+  const [loadingClip, setLoadingClip] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   function choose(next: File | null) {
     if (!next) return;
     setError(null);
     onFile(next);
+  }
+
+  async function loadShowcase() {
+    setLoadingClip(true);
+    setError(null);
+    try {
+      const response = await fetch(showcase.href);
+      if (!response.ok) throw new Error("The showcase clip is not available.");
+      const blob = await response.blob();
+      onFile(new File([blob], `${showcase.title}.mp4`, { type: "video/mp4" }));
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "The showcase clip is not available.");
+    } finally {
+      setLoadingClip(false);
+    }
   }
 
   async function run() {
@@ -92,14 +109,20 @@ export function ModuleStudio({
         ) : (
           <p className="drop-hint">Upload a short clip for this use case. About one frame a second is sent to the model, up to 12 frames.</p>
         )}
-        <label className="upload">
-          Choose a video
-          <input
-            type="file"
-            accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov"
-            onChange={(event) => choose(event.target.files?.[0] ?? null)}
-          />
-        </label>
+        <div className="clip-actions">
+          <button type="button" className="ghost" disabled={loadingClip} onClick={() => void loadShowcase()}>
+            {loadingClip ? "Loading clip…" : `Load showcase clip · ${showcase.title}`}
+          </button>
+          <label className="upload">
+            Choose your own video
+            <input
+              type="file"
+              accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov"
+              onChange={(event) => choose(event.target.files?.[0] ?? null)}
+            />
+          </label>
+        </div>
+        <p className="credit">{showcase.credit}</p>
         <button type="button" disabled={!file || running} onClick={() => void run()}>
           {running ? "Reading the clip…" : "Run this module"}
         </button>
