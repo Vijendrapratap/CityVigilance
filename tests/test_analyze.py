@@ -32,6 +32,21 @@ class AnalyzeTests(unittest.TestCase):
         self.assertEqual(arm["greenSeconds"], 26)
         self.assertEqual(arm["queueMetres"], 0)
 
+    def test_movement_is_sudden_only_when_the_count_jumps(self) -> None:
+        sudden = build_event("movement", [{"person": 2}, {"person": 10}], "t")
+        steady = build_event("movement", [{"person": 8}, {"person": 9}], "t")
+        quiet = build_event("movement", [{"person": 1}, {"person": 4}], "t")
+        self.assertEqual(sudden["finding"]["level"], "sudden")
+        self.assertEqual(sudden["strength"], "review")
+        self.assertEqual(steady["finding"]["level"], "steady")
+        self.assertEqual(quiet["finding"]["level"], "steady")
+
+    def test_a_clip_does_not_invent_a_plate(self) -> None:
+        event = build_event("plate", [{"car": 4}], "t")
+        self.assertEqual(event["finding"]["text"], "")
+        self.assertFalse(event["finding"]["listed"])
+        self.assertIn("plate reader", event["note"])
+
     def test_a_quiet_road_does_not_propose_a_new_green(self) -> None:
         event = build_event("traffic", [{"car": 1}], "t")
         arm = event["finding"]["arms"][0]

@@ -36,6 +36,18 @@ def build_event(module: str, frame_counts: list[dict[str, int]], at: str) -> dic
                 "Overlapping people in a dense crowd are undercounted."
             ),
         )
+    elif module == "movement":
+        people = _peak(frame_counts, "person")
+        low = min((frame.get("person", 0) for frame in frame_counts), default=0)
+        level = "sudden" if people >= 8 and low * 2 <= people else "steady"
+        event = _event(
+            camera_id,
+            "movement",
+            at,
+            "review",
+            {"type": "movement", "level": level, "people": people},
+            "The level compares the busiest frame with the quietest. A sudden jump is a review, not an order.",
+        )
     elif module == "weapon":
         event = _event(
             camera_id,
@@ -53,6 +65,15 @@ def build_event(module: str, frame_counts: list[dict[str, int]], at: str) -> dic
             "review",
             {"type": "accident", "crash": None},
             "No accident model is loaded. The officer watches this clip. This desk does not call 112.",
+        )
+    elif module == "plate":
+        event = _event(
+            camera_id,
+            "plate",
+            at,
+            "review",
+            {"type": "plate", "text": "", "listed": False, "complaint": ""},
+            "No plate reader is loaded. A complaint is raised only when a reader returns a plate that is on the list.",
         )
     elif module == "traffic":
         vehicles = _peak_sum(frame_counts, VEHICLES)

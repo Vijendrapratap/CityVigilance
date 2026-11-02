@@ -19,6 +19,7 @@ QUEUE_SETS = [
 ARM_NAMES = ["North", "East", "South", "West"]
 CURRENT_GREENS = [20, 20, 25, 15]
 CROWD_INCIDENT_AT = 40
+DEMO_PLATE = "DL01CV0001"
 
 CAMERAS = [
     {"id": "cam-crowd", "name": "Crowd camera 1", "kind": "crowd"},
@@ -39,6 +40,18 @@ def suggested_green(queue_metres: int) -> int:
 def crowd_event(sequence: int, at: str) -> dict[str, Any]:
     count = COUNTS[sequence % len(COUNTS)]
     return _event("cam-crowd", "crowd", sequence, at, "high", {"type": "crowd", "count": count})
+
+
+def movement_event(sequence: int, at: str) -> dict[str, Any]:
+    count = COUNTS[sequence % len(COUNTS)]
+    return _event(
+        "cam-crowd",
+        "movement",
+        sequence,
+        at,
+        "review",
+        {"type": "movement", "level": "sudden", "people": count},
+    )
 
 
 def weapon_event(sequence: int, at: str) -> dict[str, Any]:
@@ -74,11 +87,29 @@ def traffic_event(sequence: int, at: str) -> dict[str, Any]:
     return _event("cam-junction", "traffic", sequence, at, "high", {"type": "traffic", "arms": arms})
 
 
+def plate_event(sequence: int, at: str) -> dict[str, Any]:
+    return _event(
+        "cam-junction",
+        "plate",
+        sequence,
+        at,
+        "review",
+        {
+            "type": "plate",
+            "text": DEMO_PLATE,
+            "listed": True,
+            "complaint": "Demo complaint on file. This is not a real registration.",
+        },
+    )
+
+
 MODELS = {
     "crowd": crowd_event,
+    "movement": movement_event,
     "weapon": weapon_event,
     "accident": accident_event,
     "traffic": traffic_event,
+    "plate": plate_event,
 }
 
 

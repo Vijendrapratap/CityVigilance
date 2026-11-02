@@ -9,10 +9,10 @@ function eventsAt(sequence: number) {
   return runModels(publishFrames(sequence, at)).events;
 }
 
-test("one stream tick fans out to four sample models and skips unconfigured api models", () => {
+test("one stream tick fans out to six sample models and skips unconfigured api models", () => {
   const { events, skipped } = runModels(publishFrames(0, at));
   const models = events.map((event) => event.model).sort();
-  assert.deepEqual(models, ["accident", "crowd", "traffic", "weapon"]);
+  assert.deepEqual(models, ["accident", "crowd", "movement", "plate", "traffic", "weapon"]);
   assert.equal(skipped.length, 0);
   assert.equal(events.every((event) => event.source === "sample"), true);
 });
@@ -152,6 +152,71 @@ test("an uploaded clip replaces the sample on that camera only", () => {
   assert.equal(merged.some((event) => event.model === "accident" && event.source === "sample"), true);
   const specs = incidentSpecs(merged);
   assert.equal(specs.some((spec) => spec.kind === "crowd"), false);
+});
+
+test("a listed demo plate opens its own incident and the flag stays on screen", () => {
+  const specs = incidentSpecs(eventsAt(0));
+  const plate = specs.find((spec) => spec.kind === "plate");
+  assert.ok(plate);
+  assert.equal(plate.id, "inc-plate-cam-junction");
+  let state = ensureIncidents(emptyDesk(), specs, at);
+  state = reduceDesk(state, {
+    type: "flag-plate",
+    incidentId: plate.id,
+    detail: "DL01CV0001",
+    note: "",
+    at,
+  });
+  assert.equal(state.incidents[plate.id]?.status, "accepted");
+  assert.equal(state.orders[0]?.action, "flag-plate");
+  assert.equal(state.orders[0]?.adapter, "screen");
+  const blocked = reduceDesk(state, {
+    type: "flag-plate",
+    incidentId: specs.find((spec) => spec.kind === "traffic")!.id,
+    detail: "DL01CV0001",
+    note: "",
+    at,
+  });
+  assert.equal(blocked.orders.length, 1);
+});
+
+test("an open incident drops when the reading no longer supports it, and a recorded order stays", () => {
+  const specs = incidentSpecs(eventsAt(0));
+  const crowd = specs.find((spec) => spec.kind === "crowd");
+  const accident = specs.find((spec) => spec.kind === "accident");
+  assert.ok(crowd && accident);
+  let state = ensureIncidents(emptyDesk(), specs, at);
+  state = reduceDesk(state, {
+    type: "deploy-police",
+    incidentId: crowd.id,
+    detail: "46 people",
+    note: "",
+    at,
+  });
+  const withoutCrowd = specs.filter((spec) => spec.id !== crowd.id);
+  state = reduceDesk(state, { type: "sync", specs: withoutCrowd, at });
+  assert.equal(state.incidents[crowd.id]?.status, "deployed");
+  assert.equal(state.orders.length, 1);
+  let fresh = ensureIncidents(emptyDesk(), specs, at);
+  fresh = reduceDesk(fresh, { type: "sync", specs: [accident], at });
+  assert.equal(fresh.incidents[crowd.id], undefined);
+  assert.equal(fresh.incidents[accident.id]?.status, "open");
+});
+
+test("sudden movement opens the crowd incident even below the people threshold", () => {
+  const specs = incidentSpecs([
+    {
+      id: "move",
+      cameraId: "cam-crowd",
+      model: "movement",
+      at,
+      sequence: 0,
+      source: "local",
+      strength: "review",
+      finding: { type: "movement", level: "sudden", people: 12 },
+    },
+  ]);
+  assert.equal(specs.some((spec) => spec.kind === "crowd"), true);
 });
 
 test("three vehicles in frame open a traffic incident without pretending to measure metres", () => {

@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { DISMISS_REASONS } from "../pipeline/types";
 
-export type DialogMode = "police" | "ambulance" | "signal" | "dismiss";
+export type DialogMode = "police" | "ambulance" | "signal" | "plate" | "dismiss";
 
 export function ActionDialog({
   mode,
@@ -50,7 +50,15 @@ export function ActionDialog({
 
   const dismissBlocked = reason === "Other" && note.trim().length === 0;
   const confirmLabel =
-    mode === "police" ? "Record police order" : mode === "ambulance" ? "Record ambulance order" : mode === "signal" ? "Store signal plan" : "Dismiss incident";
+    mode === "police"
+      ? "Record police order"
+      : mode === "ambulance"
+        ? "Record ambulance order"
+        : mode === "signal"
+          ? "Store signal plan"
+          : mode === "plate"
+            ? "Flag this plate"
+            : "Dismiss incident";
 
   return (
     <div

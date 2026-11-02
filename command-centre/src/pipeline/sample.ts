@@ -9,10 +9,14 @@ export const CAMERAS: Camera[] = [
 /** Demo plugs. API and local slots exist; no vendor is configured. */
 export const MODEL_MODES: Record<ModelId, ModelMode> = {
   crowd: "sample",
+  movement: "sample",
   weapon: "sample",
   accident: "sample",
   traffic: "sample",
+  plate: "sample",
 };
+
+export const DEMO_PLATE = "DL01CV0001";
 
 const COUNTS = [46, 48, 51, 49, 53, 50, 47, 52];
 
@@ -62,6 +66,10 @@ export function sampleEvent(model: ModelId, frame: Frame): ModelEvent | null {
     const count = COUNTS[frame.sequence % COUNTS.length] ?? 46;
     return event(frame, "crowd", "high", { type: "crowd", count });
   }
+  if (model === "movement" && frame.cameraId === "cam-crowd") {
+    const count = COUNTS[frame.sequence % COUNTS.length] ?? 46;
+    return event(frame, "movement", "review", { type: "movement", level: "sudden", people: count });
+  }
   if (model === "weapon" && frame.cameraId === "cam-crowd") {
     const count = COUNTS[frame.sequence % COUNTS.length] ?? 46;
     return event(frame, "weapon", "review", {
@@ -85,6 +93,14 @@ export function sampleEvent(model: ModelId, frame: Frame): ModelEvent | null {
     });
     return event(frame, "traffic", "high", { type: "traffic", arms });
   }
+  if (model === "plate" && frame.cameraId === "cam-junction") {
+    return event(frame, "plate", "review", {
+      type: "plate",
+      text: DEMO_PLATE,
+      listed: true,
+      complaint: "Demo complaint on file. This is not a real registration.",
+    });
+  }
   return null;
 }
 
@@ -94,9 +110,11 @@ export function incidentSpecs(events: ModelEvent[]): IncidentSpec[] {
     const mine = events.filter((item) => item.cameraId === camera.id);
     const crowd = finding(mine, "crowd");
     const weapon = finding(mine, "weapon");
+    const movement = finding(mine, "movement");
     if (
       (crowd?.type === "crowd" && crowd.count >= 40) ||
-      (weapon?.type === "weapon" && weapon.kind !== "none")
+      (weapon?.type === "weapon" && weapon.kind !== "none") ||
+      (movement?.type === "movement" && movement.level === "sudden")
     ) {
       specs.push({ id: `inc-crowd-${camera.id}`, cameraId: camera.id, kind: "crowd" });
     }
@@ -107,6 +125,10 @@ export function incidentSpecs(events: ModelEvent[]): IncidentSpec[] {
     const traffic = finding(mine, "traffic");
     if (traffic?.type === "traffic" && trafficOpens(traffic)) {
       specs.push({ id: `inc-traffic-${camera.id}`, cameraId: camera.id, kind: "traffic" });
+    }
+    const plate = finding(mine, "plate");
+    if (plate?.type === "plate" && plate.listed) {
+      specs.push({ id: `inc-plate-${camera.id}`, cameraId: camera.id, kind: "plate" });
     }
   }
   return specs;
@@ -126,6 +148,7 @@ function trafficOpens(traffic: Extract<ModelEvent["finding"], { type: "traffic" 
 export function displayId(incidentId: string): string {
   if (incidentId.startsWith("inc-crowd")) return "CR-1";
   if (incidentId.startsWith("inc-accident")) return "RD-1";
+  if (incidentId.startsWith("inc-plate")) return "PL-1";
   return "JN-1";
 }
 

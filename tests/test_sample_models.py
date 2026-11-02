@@ -1,6 +1,15 @@
 import unittest
 
-from cityvigilance.sample import accident_event, crowd_event, run_model, traffic_event, weapon_event
+from cityvigilance.sample import (
+    DEMO_PLATE,
+    accident_event,
+    crowd_event,
+    movement_event,
+    plate_event,
+    run_model,
+    traffic_event,
+    weapon_event,
+)
 
 
 class SampleModelTests(unittest.TestCase):
@@ -26,6 +35,18 @@ class SampleModelTests(unittest.TestCase):
         self.assertEqual(arms[0]["queueMetres"], 62)
         self.assertEqual(arms[0]["greenSeconds"], 31)
         self.assertNotEqual(arms[0]["greenSeconds"], arms[0]["currentGreenSeconds"])
+
+    def test_sample_movement_is_marked_for_review(self) -> None:
+        event = movement_event(0, "t")
+        self.assertEqual(event["finding"]["level"], "sudden")
+        self.assertEqual(event["finding"]["people"], 46)
+        self.assertEqual(event["strength"], "review")
+
+    def test_sample_plate_is_labeled_as_demo_data(self) -> None:
+        event = plate_event(0, "t")
+        self.assertEqual(event["finding"]["text"], DEMO_PLATE)
+        self.assertTrue(event["finding"]["listed"])
+        self.assertIn("not a real registration", event["finding"]["complaint"])
 
 
 if __name__ == "__main__":

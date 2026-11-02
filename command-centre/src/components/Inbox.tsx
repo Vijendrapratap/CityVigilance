@@ -3,7 +3,7 @@ import type { IncidentRecord, ModelEvent } from "../pipeline/types";
 
 export type InboxFilter = "open" | "acted" | "all";
 
-const ORDER = ["crowd", "accident", "traffic"] as const;
+const ORDER = ["crowd", "accident", "traffic", "plate"] as const;
 
 export function Inbox({
   incidents,
@@ -79,6 +79,7 @@ export function Inbox({
 function kindLabel(kind: IncidentRecord["kind"]): string {
   if (kind === "crowd") return "Crowd";
   if (kind === "accident") return "Accident";
+  if (kind === "plate") return "Plate";
   return "Signal plan";
 }
 
@@ -102,6 +103,13 @@ function detailLine(cameraId: string, kind: IncidentRecord["kind"], events: Mode
     const accident = mine.find((event) => event.finding.type === "accident");
     if (accident?.finding.type === "accident" && accident.finding.crash === null) return "Crash not decided";
     return "Crash reported by the accident model";
+  }
+  if (kind === "plate") {
+    const plate = mine.find((event) => event.finding.type === "plate");
+    if (plate?.finding.type === "plate" && plate.finding.text) {
+      return plate.finding.listed ? `${plate.finding.text} · complaint on file` : plate.finding.text;
+    }
+    return "No plate read";
   }
   const traffic = mine.find((event) => event.finding.type === "traffic");
   if (traffic?.finding.type === "traffic") {

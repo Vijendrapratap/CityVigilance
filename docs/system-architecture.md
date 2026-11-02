@@ -215,10 +215,10 @@ Same program. A configuration file changes the plugs. The command-centre screens
 | Plug | Demo, to show the department | Deployment, after the project is awarded |
 | --- | --- | --- |
 | Cameras | Three sample videos labeled as cameras: a crowd, a road, a junction. A test camera can replace a file | The department's cameras, through their VMS or a direct stream |
-| Models | Vision API on those sample videos, or a local model on the demo machine. Sample video is not city footage, so an API can be used before the department allows city video to leave the building | Local models on the police network, unless the department approves an API for city video |
+| Models | Demo data plays a prepared story. A file feed runs the person and vehicle detector on CPU. Weapon, crash, and plate readers are not loaded on a file | Local models on the police network, unless the department approves an API for city video |
 | Map | Placeholder points. No city is drawn as if it had been chosen | The real camera locations |
 | Police and ambulance | **Deploy** records the order, the officer, the time, and the clip on the incident | The same button sends the order to the dispatch system the department names |
-| Signals | **Accept signal plan** stores the suggested greens | The same button writes to the signal controller the department names |
+| Signals | **Accept signal plan** stores the suggested greens. **Flag this plate** stores a complaint-list hit on the screen and does not stop a vehicle | The same signal button writes to the signal controller the department names. A plate flag follows the city's notice process |
 | Accounts | One shared demo desk, labeled Police, Ambulance, or Traffic so the room can see each action | Named officers, with rights set by the department |
 | Where it runs | One machine in the room is enough | The network the department requires. On-premises is available because many departments will want video to stay inside. That choice is still open |
 
@@ -235,18 +235,38 @@ If a model is not ready on demo day, that plug can emit timed findings from the 
 
 ## Models the architecture already has room for
 
-The demo uses the first four. The rest register on the same bus when the department wants them. Each can be local or API.
+Six modules are on the command picture. The rest register on the same bus when the department wants them. Each can be sample, a file feed, a local model, or an API.
 
-| Model | Demo | Finding | Desk action |
-| --- | --- | --- | --- |
-| Crowd count | Yes | People in view, updated on the map | Included on the police incident |
-| Weapon check | Yes | Possible firearm or possible blade | Deploy police after the officer sees the clip |
-| Accident | Yes | Crash on a road or junction camera | Deploy ambulance |
-| Traffic queues | Yes | Queue per arm, suggested green seconds | Accept signal plan |
-| Number plates, red light, wrong-way, helmet, triple-riding, stolen list | Later | Enforcement events | Review, then the city's notice process |
-| Fights | Later | Possible fight | Police incident |
-| Fire, smoke, fallen tree, waterlogging | Later | Hazard | Dispatch incident |
-| Crowd flow and panic | Later | Speed, bottleneck, sudden running | Event security, on the same crowd cameras |
+| Module | Colour | Demo data | A file feed today | Desk action |
+| --- | --- | --- | --- | --- |
+| Crowd | Amber | People count on Crowd camera 1, rotating 46 to 53 | Peak people the detector can separate | Deploy police, with movement and weapon, as CR-1 |
+| Movement | Violet | Sudden, marked for review | Sudden when the busiest frame is at least 8 people and at least twice the quietest frame. Otherwise steady | Same crowd incident. It does not dispatch by itself |
+| Weapon | Rose | Possible blade, because every sample count is at least 40 | Not decided. This detector has no weapon class | Deploy police after a person watches the clip. The line stays **Possible** |
+| Accident | Red | Crash on Road camera 1 | Not decided. This detector has no crash class | Deploy ambulance. It does not call 112. RD-1 |
+| Traffic | Blue | Queue metres and a green time. North is 31 seconds against a current 20 | Vehicles in the frame, then a stored green of twice that count, between 10 and 60 seconds | Accept signal plan. It does not write to a controller. JN-1 |
+| Plates | Teal | `DL01CV0001`, labeled as a demo complaint, not a real registration | Empty. No plate reader is loaded, so a plate is never invented | Flag this plate on the screen. It does not stop a vehicle. PL-1 |
+
+A crowd incident opens when the count is at least 40, or the weapon line is not "none", or movement is sudden. A plate incident opens only when the plate is on the complaint list. An accident incident opens only when crash is true. A null crash means the model has not decided.
+
+## What names the situation
+
+The reading a person can defend in the room comes from the person and vehicle detector, plus the change in that count from frame to frame.
+
+**V-JEPA** (Meta's video joint-embedding model, including V-JEPA 2) was checked as a categoriser. Its public action head is trained on Something-Something v2: hand and object actions such as "putting something into something". That label set does not contain a crash, a weapon, congestion, or a number plate. The model is hundreds of millions to about a billion parameters and is built for a GPU. It is relevant later as a video backbone, after a head is trained on city events the department cares about. It is not the thing that names a crash, a plate, or a weapon in this demo.
+
+A **vision-language model** would write a sentence about the picture, which can help an officer understand a scene. It still must not issue the order. It also needs a GPU the department chooses, or an API, and an API only after the department allows city video to leave the building. This demo machine has no NVIDIA GPU, so no vision-language model is called and no caption is invented.
+
+Weapon, crash, and plate stay undecided on a real clip until those models exist. The demo story is labeled **Demo data** so the room can still see the full loop.
+
+## Two ways to show it
+
+The same screen has two modes. Switching mode clears the log and the attached clips, so the stories do not mix.
+
+**Demo data** is the default. The page is already alive: crowd, sudden movement, a possible weapon, a crash, a signal plan, and a plate on the complaint list. The showcase picture plays with that story. **Watch showcase clip** reloads it. The numbers stay the prepared story until **Read a feed**.
+
+**Live pipeline** emits no sample numbers. The rail says Waiting until **Read a feed** attaches a file. A city camera is not connected. The file is sampled at about one frame a second, up to 12 frames, and YOLOv8n on CPU counts people and vehicles. In Demo data, that same reading replaces the prepared story for that camera only.
+
+Orders in both modes stay on this screen.
 
 ## What is still open
 
@@ -260,14 +280,25 @@ These do not change the diagram. They fill the plugs.
 6. Cloud, on-premises, or a mix, and who may open live video.
 7. The people-count limit that opens a crowd incident, set per place after the first real pictures.
 
-## Departments and clips
+## The command picture
 
-The showcase opens on four departments: police, traffic, emergency dispatch, and event security. Each department shows who sits there, what they can record, and what stays with a person. A module is one use case with its own video.
+The screen is one command picture, not a stack of department pages.
 
-Upload a clip and run that module. The model service (`python -m cityvigilance.server`) samples about one frame a second, up to 12 frames, and runs YOLOv8n on CPU. People and vehicles come from that detector. Weapon and accident modules keep the clip on screen and leave the decision with the officer, because this detector has no weapon class and no crash class. Placing the result on the desk replaces the sample numbers for that camera only.
+- A colour rail on the left, one colour per module.
+- The picture in the centre: a showcase clip, an attached file, or an empty state.
+- The situation on the right: the reading, the mark, and one confirm action.
+- A thin outcome log along the bottom.
+
+Police sits on crowd, movement, and weapon. Traffic sits on the signal plan and the plate. Emergency dispatch sits on the accident. Event security reads the same crowd and movement the police desk uses.
+
+Showcase clips, under their original licences in `command-centre/public/showcase/`:
+
+- Crowd, movement, and weapon: Sabana Grande boulevard, Caracas. Vicente Quintero, CC BY 3.0.
+- Traffic and plates: Link Road, Cuttack. Subhashish Panigrahi, CC BY-SA 3.0.
+- Accident: a truck collision on the A1. CaughtOnDashcamOrCCTV, CC BY 3.0. The wreck is visible. The accident model still leaves the decision with the officer.
 
 ## Where the current screen fits
 
-The command centre in `command-centre/` (`cd command-centre && npm run dev`, http://127.0.0.1:5173) is this demo. A sample stream feeds the crowd, weapon, accident, and traffic models. The same sample rules live in the Python package `cityvigilance/`, and `notebooks/` is the bench for testing one model at a time. The map shows a live people count. **Deploy police**, **Deploy ambulance**, and **Accept signal plan** record orders on the incident. Findings are labeled sample. City cameras, a vision API, dispatch, and a signal controller are the same plugs with nothing attached yet. Deployment changes those plugs, not the desk.
+The command centre in `command-centre/` (`cd command-centre && npm run dev`, http://127.0.0.1:5173) is this demo. The model service is `python -m cityvigilance.server` on http://127.0.0.1:8765. The same sample rules live in `cityvigilance/sample.py`. `notebooks/06_demo_and_live.ipynb` walks the two modes, the six readings, and why V-JEPA is not the categoriser. **Deploy police**, **Deploy ambulance**, **Accept signal plan**, and **Flag this plate** record orders on the incident. City cameras, a vision API, dispatch, and a signal controller are the same plugs with nothing attached yet. Deployment changes those plugs, not the desk.
 
-The sample models run on the CPU of whichever machine starts them. This demo does not use a GPU and does not call a vision server. A later local model would use a GPU on a machine the department chooses. A later API model would use the provider's servers, and only if city video is allowed to leave the building.
+The sample models and the file detector run on the CPU of whichever machine starts them. This demo does not use a GPU and does not call a vision server. A later local model would use a GPU on a machine the department chooses. A later API model would use the provider's servers, and only if city video is allowed to leave the building.

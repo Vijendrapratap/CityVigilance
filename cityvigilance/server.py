@@ -88,10 +88,14 @@ def _summary(event: dict) -> str:
     finding = event["finding"]
     if finding["type"] == "crowd":
         return f"{finding['count']} people"
+    if finding["type"] == "movement":
+        return "Sudden movement" if finding["level"] == "sudden" else "Steady crowd"
     if finding["type"] == "weapon":
         return "Weapon model not loaded"
     if finding["type"] == "accident":
         return "Accident model not loaded"
+    if finding["type"] == "plate":
+        return "Plate reader not loaded"
     arm = finding["arms"][0]
     return f"{arm.get('vehicles', 0)} vehicles"
 

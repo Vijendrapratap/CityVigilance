@@ -1,4 +1,4 @@
-export type ModelId = "crowd" | "weapon" | "accident" | "traffic";
+export type ModelId = "crowd" | "movement" | "weapon" | "accident" | "traffic" | "plate";
 
 export type ModelMode = "sample" | "api" | "local" | "off";
 
@@ -21,6 +21,8 @@ export type Frame = {
 
 export type CrowdFinding = { type: "crowd"; count: number };
 
+export type MovementFinding = { type: "movement"; level: "steady" | "sudden"; people: number };
+
 export type WeaponFinding = { type: "weapon"; kind: "firearm" | "blade" | "none" };
 
 export type AccidentFinding = { type: "accident"; crash: boolean | null };
@@ -35,7 +37,9 @@ export type TrafficArm = {
 
 export type TrafficFinding = { type: "traffic"; arms: TrafficArm[]; basis?: "metres" | "vehicles" };
 
-export type Finding = CrowdFinding | WeaponFinding | AccidentFinding | TrafficFinding;
+export type PlateFinding = { type: "plate"; text: string; listed: boolean; complaint: string };
+
+export type Finding = CrowdFinding | MovementFinding | WeaponFinding | AccidentFinding | TrafficFinding | PlateFinding;
 
 export type ModelEvent = {
   id: string;
@@ -51,7 +55,7 @@ export type ModelEvent = {
   device?: string;
 };
 
-export type IncidentKind = "crowd" | "accident" | "traffic";
+export type IncidentKind = "crowd" | "accident" | "traffic" | "plate";
 
 export type IncidentStatus = "open" | "deployed" | "accepted" | "dismissed";
 
@@ -62,7 +66,7 @@ export type IncidentRecord = {
   openedAt: string;
 };
 
-export type OrderAction = "deploy-police" | "deploy-ambulance" | "accept-signal" | "dismiss";
+export type OrderAction = "deploy-police" | "deploy-ambulance" | "accept-signal" | "flag-plate" | "dismiss";
 
 export type Order = {
   id: string;

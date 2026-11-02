@@ -5,7 +5,11 @@ export function emptyDesk(): DeskState {
 }
 
 export function ensureIncidents(state: DeskState, specs: IncidentSpec[], at: string): DeskState {
+  const live = new Set(specs.map((spec) => spec.id));
   const incidents = { ...state.incidents };
+  for (const [id, incident] of Object.entries(incidents)) {
+    if (!live.has(id) && incident.status === "open") delete incidents[id];
+  }
   for (const spec of specs) {
     if (!incidents[spec.id]) {
       incidents[spec.id] = {
@@ -24,6 +28,7 @@ export type DeskAction =
   | { type: "deploy-police"; incidentId: string; detail: string; note: string; at: string }
   | { type: "deploy-ambulance"; incidentId: string; detail: string; note: string; at: string }
   | { type: "accept-signal"; incidentId: string; detail: string; note: string; at: string }
+  | { type: "flag-plate"; incidentId: string; detail: string; note: string; at: string }
   | { type: "dismiss"; incidentId: string; reason: string; note: string; at: string }
   | { type: "reset"; specs: IncidentSpec[]; at: string };
 
@@ -37,6 +42,7 @@ export function reduceDesk(state: DeskState, action: DeskAction): DeskState {
   if (action.type === "deploy-police" && incident.kind !== "crowd") return state;
   if (action.type === "deploy-ambulance" && incident.kind !== "accident") return state;
   if (action.type === "accept-signal" && incident.kind !== "traffic") return state;
+  if (action.type === "flag-plate" && incident.kind !== "plate") return state;
 
   if (action.type === "dismiss") {
     const reason = action.reason.trim();
@@ -53,6 +59,7 @@ export function reduceDesk(state: DeskState, action: DeskAction): DeskState {
   if (action.type === "deploy-ambulance") {
     return close(state, action.incidentId, "deployed", "deploy-ambulance", detail, note, action.at);
   }
+  if (action.type === "flag-plate") return close(state, action.incidentId, "accepted", "flag-plate", detail, note, action.at);
   return close(state, action.incidentId, "accepted", "accept-signal", detail, note, action.at);
 }
 
@@ -60,6 +67,7 @@ export function orderLabel(action: OrderAction): string {
   if (action === "deploy-police") return "Police order";
   if (action === "deploy-ambulance") return "Ambulance order";
   if (action === "accept-signal") return "Signal plan stored";
+  if (action === "flag-plate") return "Plate flagged";
   return "Dismissed";
 }
 
@@ -76,7 +84,7 @@ export function hydrateDesk(raw: unknown): DeskState {
       const record = value as Record<string, unknown>;
       if (
         typeof record.cameraId === "string" &&
-        (record.kind === "crowd" || record.kind === "accident" || record.kind === "traffic") &&
+        (record.kind === "crowd" || record.kind === "accident" || record.kind === "traffic" || record.kind === "plate") &&
         (record.status === "open" || record.status === "deployed" || record.status === "accepted" || record.status === "dismissed") &&
         typeof record.openedAt === "string"
       ) {
@@ -133,6 +141,7 @@ function isOrder(value: unknown): value is DeskState["orders"][number] {
     (order.action === "deploy-police" ||
       order.action === "deploy-ambulance" ||
       order.action === "accept-signal" ||
+      order.action === "flag-plate" ||
       order.action === "dismiss") &&
     typeof order.detail === "string" &&
     typeof order.note === "string" &&

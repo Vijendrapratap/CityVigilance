@@ -25,7 +25,7 @@ export function OutcomeLog({
         <ResetButton onReset={onReset} />
       </header>
       {orders.length === 0 ? (
-        <p className="empty">No orders yet. Deploy police, deploy an ambulance, accept a signal plan, or dismiss an incident.</p>
+        <p className="empty">No orders yet. Deploy police, deploy an ambulance, accept a signal plan, flag a plate, or dismiss an incident.</p>
       ) : (
         <ol className="log-list">
           <li className="log-row log-head" aria-hidden="true">

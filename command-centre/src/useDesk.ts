@@ -14,15 +14,15 @@ function loadDesk() {
   }
 }
 
-export function useDesk(localEvents: ModelEvent[] = []) {
+export function useDesk(localEvents: ModelEvent[] = [], mode: "demo" | "live" = "demo") {
   const [sequence, setSequence] = useState(0);
   const [now, setNow] = useState(() => new Date().toISOString());
   const [state, dispatch] = useReducer(reduceDesk, undefined, loadDesk);
 
-  const events = useMemo(
-    () => mergeLocal(runModels(publishFrames(sequence, now)).events, localEvents),
-    [sequence, now, localEvents],
-  );
+  const events = useMemo(() => {
+    const sample = mode === "demo" ? runModels(publishFrames(sequence, now)).events : [];
+    return mergeLocal(sample, localEvents);
+  }, [sequence, now, localEvents, mode]);
   const specs = useMemo(() => incidentSpecs(events), [events]);
 
   useEffect(() => {

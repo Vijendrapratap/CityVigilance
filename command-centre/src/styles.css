@@ -1,5 +1,11 @@
 :root {
   color-scheme: dark;
+  --crowd: #e2a23a;
+  --movement: #b794f6;
+  --weapon: #e7b3c8;
+  --accident: #e15b55;
+  --traffic: #7aa2f0;
+  --plate: #5dbea3;
   --bg: #101418;
   --panel: #171e26;
   --panel-2: #1e2731;
@@ -393,6 +399,156 @@ h1 { font-size: 22px; font-weight: 650; letter-spacing: -0.02em; }
 
 .footnote { color: var(--muted); font-size: 12px; padding: 0 4px; }
 
+.floor {
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) minmax(112px, 156px);
+  background:
+    radial-gradient(900px 280px at 10% -10%, rgba(226, 162, 58, 0.08), transparent 50%),
+    var(--bg);
+}
+.floor-top {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 18px 8px;
+}
+.floor h1, .floor h2, .floor p { margin: 0; }
+.floor-top h1 { font-size: 28px; letter-spacing: -0.03em; }
+.mode-switch { display: flex; justify-content: center; gap: 6px; }
+.mode-switch button {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  padding: 6px 14px;
+}
+.mode-switch button[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+.floor-body {
+  display: grid;
+  grid-template-columns: 212px minmax(0, 1fr) 320px;
+  min-height: 0;
+  gap: 10px;
+  padding: 0 12px;
+}
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+  overflow: auto;
+  padding: 4px;
+}
+.rail button {
+  display: grid;
+  grid-template-columns: 8px 1fr;
+  gap: 10px;
+  align-items: center;
+  text-align: left;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 10px 10px;
+}
+.rail button i {
+  width: 8px;
+  height: 28px;
+  border-radius: 99px;
+  background: var(--line);
+  display: block;
+}
+.rail button[data-module="crowd"] i { background: var(--crowd); }
+.rail button[data-module="movement"] i { background: var(--movement); }
+.rail button[data-module="weapon"] i { background: var(--weapon); }
+.rail button[data-module="accident"] i { background: var(--accident); }
+.rail button[data-module="traffic"] i { background: var(--traffic); }
+.rail button[data-module="plate"] i { background: var(--plate); }
+.rail button strong, .rail button small { display: block; }
+.rail button small { color: var(--muted); font-weight: 500; margin-top: 2px; }
+.rail button[aria-pressed="true"] { background: var(--panel); border-color: var(--line); }
+.rail button[aria-pressed="true"][data-module="crowd"] { box-shadow: inset 3px 0 0 var(--crowd); }
+.rail button[aria-pressed="true"][data-module="movement"] { box-shadow: inset 3px 0 0 var(--movement); }
+.rail button[aria-pressed="true"][data-module="weapon"] { box-shadow: inset 3px 0 0 var(--weapon); }
+.rail button[aria-pressed="true"][data-module="accident"] { box-shadow: inset 3px 0 0 var(--accident); }
+.rail button[aria-pressed="true"][data-module="traffic"] { box-shadow: inset 3px 0 0 var(--traffic); }
+.rail button[aria-pressed="true"][data-module="plate"] { box-shadow: inset 3px 0 0 var(--plate); }
+.stage, .situation {
+  min-width: 0;
+  min-height: 0;
+  background: rgba(23, 30, 38, 0.92);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+}
+.stage { display: flex; flex-direction: column; gap: 10px; }
+.stage header p, .situation .kicker { color: var(--muted); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
+.stage h2 { font-size: 18px; font-weight: 600; }
+.hero-video, .hero-empty {
+  flex: 1;
+  min-height: 180px;
+  width: 100%;
+  border-radius: 12px;
+  background: #0c1014;
+  object-fit: contain;
+}
+.hero-empty {
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  color: var(--muted);
+  text-align: center;
+}
+.stage[data-module="crowd"] .hero-empty { box-shadow: inset 3px 0 0 var(--crowd); }
+.stage[data-module="movement"] .hero-empty { box-shadow: inset 3px 0 0 var(--movement); }
+.stage[data-module="weapon"] .hero-empty { box-shadow: inset 3px 0 0 var(--weapon); }
+.stage[data-module="accident"] .hero-empty { box-shadow: inset 3px 0 0 var(--accident); }
+.stage[data-module="traffic"] .hero-empty { box-shadow: inset 3px 0 0 var(--traffic); }
+.stage[data-module="plate"] .hero-empty { box-shadow: inset 3px 0 0 var(--plate); }
+.stage-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.situation {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 3px solid var(--line);
+}
+.situation[data-module="crowd"] { border-top-color: var(--crowd); }
+.situation[data-module="movement"] { border-top-color: var(--movement); }
+.situation[data-module="weapon"] { border-top-color: var(--weapon); }
+.situation[data-module="accident"] { border-top-color: var(--accident); }
+.situation[data-module="traffic"] { border-top-color: var(--traffic); }
+.situation[data-module="plate"] { border-top-color: var(--plate); }
+.situation h2 { font-size: 18px; font-weight: 600; }
+.hero-figure { font-size: 42px; font-weight: 650; letter-spacing: -0.04em; line-height: 1.05; }
+.hero-figure span { display: block; margin-top: 4px; font-size: 14px; font-weight: 550; color: var(--muted); letter-spacing: 0; }
+.mark {
+  align-self: flex-start;
+  margin: 0;
+  padding: 3px 8px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  color: var(--amber);
+  font-size: 12px;
+  font-weight: 700;
+}
+.sit-copy, .sit-done { color: var(--muted); font-size: 14px; }
+.situation dl { display: grid; gap: 8px; margin: 4px 0 0; }
+.situation dt { font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+.situation dd { margin: 2px 0 0; }
+.sit-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
+.situation[data-module="crowd"] .sit-actions button:not(.ghost) { background: var(--crowd); color: #1c1406; }
+.situation[data-module="movement"] .sit-actions button:not(.ghost) { background: var(--movement); color: #1a1028; }
+.situation[data-module="weapon"] .sit-actions button:not(.ghost) { background: var(--weapon); color: #2a1520; }
+.situation[data-module="accident"] .sit-actions button:not(.ghost) { background: var(--accident); color: #2a0d0c; }
+.situation[data-module="traffic"] .sit-actions button:not(.ghost) { background: var(--traffic); color: #101828; }
+.situation[data-module="plate"] .sit-actions button:not(.ghost) { background: var(--plate); color: #06241c; }
+.situation[data-module="weapon"] .mark { color: var(--weapon); }
+.situation[data-module="accident"] .mark { color: var(--accident); }
+.situation[data-module="movement"] .mark { color: var(--movement); }
+.situation[data-module="plate"] .mark { color: var(--plate); }
+.floor .log-panel { margin: 8px 12px 10px; border-radius: 12px; }
+
 .desk-clock { position: absolute; top: 14px; right: 16px; }
 .nav { display: flex; gap: 6px; margin-bottom: 4px; }
 .nav button[aria-pressed="true"] { background: var(--amber); color: var(--amber-ink); border-color: var(--amber); }
@@ -451,7 +607,7 @@ h1 { font-size: 22px; font-weight: 650; letter-spacing: -0.02em; }
   grid-template-columns: minmax(220px, 0.8fr) minmax(280px, 1.2fr) minmax(240px, 0.9fr);
   gap: 8px;
 }
-.brief, .stage, .result-card {
+.brief, .studio .stage, .result-card {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 6px;
@@ -461,7 +617,7 @@ h1 { font-size: 22px; font-weight: 650; letter-spacing: -0.02em; }
 .brief { display: grid; align-content: start; gap: 8px; }
 .back { justify-self: start; }
 .question { font-size: 16px; }
-.stage, .result-card { display: flex; flex-direction: column; gap: 10px; }
+.studio .stage, .result-card { display: flex; flex-direction: column; gap: 10px; }
 .stage .panel-head, .result-card .panel-head { padding: 0; }
 .clip { width: 100%; max-height: 360px; background: #0c1014; border-radius: 4px; }
 .review-clip { margin: 0 12px 8px; max-height: 180px; }
@@ -556,6 +712,12 @@ textarea {
   .map-frame { width: 100%; aspect-ratio: 800 / 520; }
   .log-panel { order: 4; max-height: none; }
   .footnote { order: 5; }
+  .floor { height: auto; min-height: 100dvh; grid-template-rows: auto; overflow-x: clip; }
+  .floor-top, .floor-body { display: flex; flex-direction: column; width: 100%; min-width: 0; }
+  .rail { flex-direction: row; width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; }
+  .hero-video { max-width: 100%; }
+  .rail button { min-width: 148px; }
+  .stage, .situation { width: 100%; }
   .desk-clock { position: static; text-align: left; margin-top: 6px; }
   .dept-grid, .studio { grid-template-columns: 1fr; }
   .nav { flex-wrap: wrap; }
