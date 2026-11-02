@@ -1,6 +1,6 @@
 # CityVigilance
 
-One command picture for a police, traffic, and emergency desk. Six modules sit on one screen, each with its own colour. A person confirms before police, an ambulance, a signal plan, or a plate flag is recorded.
+A control room for cameras and signals. The home mark opens two rooms: **Monitor**, a wall of cameras, and **Traffic control**, a simulation of equal rotation against an AI plan. A person confirms before police, an ambulance, a review, or a plate flag is recorded.
 
 No city, camera brand, or model vendor is chosen.
 
@@ -25,28 +25,22 @@ npm run dev
 
 Open http://127.0.0.1:5173
 
-The page opens on **Demo data**. The story is already on screen, so a room can watch it without a camera:
+The home page is the mark. **Monitor** is the camera wall. **Traffic control** is the signal simulation.
 
-| Module | Colour | What you see | Confirm |
-| --- | --- | --- | --- |
-| Crowd | Amber | A people count on Crowd camera 1 | Deploy police |
-| Movement | Violet | Sudden, marked for review | Same police order |
-| Weapon | Rose | Possible blade. False matches are expected | Same police order |
-| Accident | Red | A crash on Road camera 1 | Deploy ambulance. This does not call 112 |
-| Traffic | Blue | A longer green on the north approach | Accept signal plan. This does not change a light |
-| Plates | Teal | `DL01CV0001`, a demo complaint, not a real registration | Flag this plate. This does not stop a vehicle |
+On the wall, every camera stays up. A crash, a sudden grouping, a watchlist box, a possible weapon, a red-light pass, or a complaint plate is drawn on that camera in its own colour. The crash screen comes forward on its own, so the picture can be judged. **False match** returns it to the wall. **Record ambulance**, **Record police**, **Record review**, and **Flag plate** stay on this screen. They do not call 112, radio a unit, stop a vehicle, or write to a signal.
 
-The showcase picture plays with that story. **Watch showcase clip** reloads it. The numbers stay the prepared story until you choose **Read a feed**.
+Weapon and plate are marks on a camera, not their own pages. A people count is not the crowd product. The crowd mark is a sudden grouping. The watchlist box is a demo record, `CV-104`, and it is not a real person. No face model is running.
 
-**Live pipeline** turns the demo numbers off. The rail says Waiting until you choose **Read a feed**. A city camera is not connected. The file is read on CPU: people and vehicles come from YOLOv8n. Movement is a jump in that count. Weapon, crash, and plate stay undecided, because this detector cannot see them, and the screen does not invent them.
+**Live** clears the story. A camera shows a reading only after **Read a feed**. The detector can raise a gathering from a jump in the people it can separate. It does not invent a weapon, a face, a plate, or a crash.
 
-Switching mode clears the log and any attached clip, so the two stories do not mix.
+Traffic control runs both plans on one junction for three minutes. North is the heavy approach. Rotation gives every arm the same green. The AI plan serves the longest queue. The AI plan holds a smaller queue and clears more vehicles. Nothing is sent to a controller. `notebooks/07_signal_simulation.ipynb` prints the same comparison.
 
 Showcase clips, kept under their original licences in `command-centre/public/showcase/`:
 
-- **Crowd, movement, and weapon:** people on the Sabana Grande boulevard, Caracas. Vicente Quintero, CC BY 3.0.
-- **Traffic and plates:** Link Road, Cuttack. Subhashish Panigrahi, CC BY-SA 3.0.
-- **Accident:** a truck collision on the A1. CaughtOnDashcamOrCCTV, CC BY 3.0. The wreck is visible. The accident model still leaves the decision with the officer.
+- **Crossing:** Shibuya Crossing, Tokyo. Basile Morin, CC BY-SA 4.0.
+- **Ground:** Sabana Grande boulevard, Caracas. Vicente Quintero, CC BY 3.0.
+- **Approach and stop line:** Link Road, Cuttack. Subhashish Panigrahi, CC BY-SA 3.0.
+- **Road:** a truck collision on the A1. CaughtOnDashcamOrCCTV, CC BY 3.0. The end card is cropped out.
 
 ## Where this runs
 
@@ -54,10 +48,11 @@ Uploaded clips are read on CPU by the model service. There is no GPU in this pat
 
 | Piece | What it actually does |
 | --- | --- |
-| Command centre | One screen. Node serves the files and proxies `/api` to the model service. |
-| Demo data | Fixed numbers, so the room can see every module before a camera exists. |
-| Live pipeline | No sample numbers. A reading appears only after a file is read. |
-| File feed | YOLOv8n on CPU counts people and vehicles in up to 12 frames. |
+| Command centre | Home, the camera wall, and the signal simulation. Node serves the files and proxies `/api` to the model service. |
+| Demo | Prepared marks on the wall, so the room can see an alert come forward before a camera exists. |
+| Live | No prepared marks. A gathering appears only after a file is read. |
+| File feed | YOLOv8n on CPU. A sudden jump in people can raise a gathering. Weapon, face, plate, and crash are not in this model. |
+| Signal simulation | Equal rotation against a longest-queue plan. It does not read a video. |
 | This machine | No NVIDIA GPU is installed here. |
 | Your computer | Opening the page does not use your GPU. The model service uses the CPU of the machine where `cityvigilance.server` is running. |
 
@@ -91,6 +86,7 @@ jupyter lab notebooks
 | `notebooks/04_traffic_queues.ipynb` | How long is each queue, and what green time clears it? |
 | `notebooks/05_clip_per_module.ipynb` | The event a file feed returns for each module |
 | `notebooks/06_demo_and_live.ipynb` | Demo data versus a live file, and why V-JEPA is not the categoriser |
+| `notebooks/07_signal_simulation.ipynb` | Equal rotation against the AI plan on one junction |
 
 Replace the sample function inside a notebook when you have a real model. Keep the same event shape. The desk does not need to change.
 
@@ -104,7 +100,7 @@ cd command-centre && npm test
 ```text
 README.md                 this page
 docs/system-architecture.md
-command-centre/           the command picture
+command-centre/           home, camera wall, and signal simulation
 cityvigilance/            sample models, clip analyzer, model service
 cityvigilance/models/     downloaded detector weights, not committed
 notebooks/                one bench per model, plus the demo-and-live walkthrough

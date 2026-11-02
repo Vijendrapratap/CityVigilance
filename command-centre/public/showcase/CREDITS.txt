@@ -1,16 +1,25 @@
 These clips are short excerpts for the CityVigilance proof of concept. Each keeps its original licence.
 
+gathering.mp4
+Shibuya Crossing, Tokyo. Basile Morin.
+https://commons.wikimedia.org/wiki/File:Shibuya_Crossing,_Tokyo,_Japan_(video).webm
+CC BY-SA 4.0
+
 crowd.mp4
 People walking on the Boulevard of Sabana Grande, Caracas. Vicente Quintero.
 https://commons.wikimedia.org/wiki/File:Sabana_Grande_Caracas._People_walking_on_the_Boulevard_of_Sabana_Grande,_famous_in_Caracas,_Venezuela.webm
 CC BY 3.0
 
+approach.mp4
+signal.mp4
 traffic.mp4
 Moving vehicles on Link Road, Cuttack, Odisha. Subhashish Panigrahi.
 https://commons.wikimedia.org/wiki/File:Moving_vehicles_in_Link_road,_Cuttack,_Odisha.webm
 CC BY-SA 3.0
 
+crash.mp4
 road.mp4
 A crash between a Royal Mail truck and a tanker on the A1. CaughtOnDashcamOrCCTV.
 https://commons.wikimedia.org/wiki/File:A_crash_between_a_Royal_Mail_truck_and_a_tanker_on_the_A1.ogv
 CC BY 3.0
+The yellow end card is cropped out of crash.mp4.

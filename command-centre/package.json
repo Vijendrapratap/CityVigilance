@@ -8,7 +8,7 @@
     "dev": "vite --host 127.0.0.1 --port 5173",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1 --port 5173",
-    "test": "node --experimental-strip-types --test src/pipeline/desk.test.ts"
+    "test": "node --experimental-strip-types --test src/pipeline/desk.test.ts src/traffic/sim.test.ts"
   },
   "dependencies": {
     "react": "^19.1.0",
