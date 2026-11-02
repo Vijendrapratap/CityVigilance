@@ -10,6 +10,7 @@ export function IncidentReview({
   incident,
   events,
   order,
+  clipUrl,
   onPolice,
   onAmbulance,
   onSignal,
@@ -19,6 +20,7 @@ export function IncidentReview({
   incident: IncidentRecord | null;
   events: ModelEvent[];
   order: Order | null;
+  clipUrl?: string | null;
   onPolice: (detail: string, note: string) => void;
   onAmbulance: (detail: string, note: string) => void;
   onSignal: (detail: string, note: string) => void;
@@ -48,7 +50,7 @@ export function IncidentReview({
         <h2>
           <span className="id">{displayId(incidentId)}</span> {heading(incident.kind)}
         </h2>
-        <p>Sample finding · {camera?.name}</p>
+        <p>{mine.some((event) => event.source === "local") ? "Uploaded clip" : "Sample finding"} · {camera?.name}</p>
       </header>
       <div className="review-body">
         <dl className="meta">
@@ -65,7 +67,7 @@ export function IncidentReview({
             <dd>{formatWhenLine(mine[0]?.at ?? incident.openedAt)}</dd>
           </div>
         </dl>
-        <FindingBody incident={incident} events={mine} />
+        <FindingBody incident={incident} events={mine} clipUrl={clipUrl ?? null} />
       </div>
       {incident.status === "open" ? (
         <div className="review-actions">
@@ -117,7 +119,8 @@ export function IncidentReview({
   );
 }
 
-function FindingBody({ incident, events }: { incident: IncidentRecord; events: ModelEvent[] }) {
+function FindingBody({ incident, events, clipUrl }: { incident: IncidentRecord; events: ModelEvent[]; clipUrl: string | null }) {
+  const local = events.some((event) => event.source === "local");
   if (incident.kind === "crowd") {
     const crowd = events.find((event) => event.finding.type === "crowd");
     const weapon = events.find((event) => event.finding.type === "weapon");
@@ -125,45 +128,58 @@ function FindingBody({ incident, events }: { incident: IncidentRecord; events: M
     const weaponText = weapon?.finding.type === "weapon" ? weaponLabel(weapon.finding.kind) : "Weapon model quiet";
     return (
       <div className="finding">
+        <ClipOrStill clipUrl={clipUrl} />
         <p className="count-hero">{count ?? "—"} <span>people</span></p>
-        <p className={weaponText.startsWith("Possible") ? "weapon-line" : "quiet-line"}>{weaponText}</p>
-        <p className="sample-note">Sample finding. The count updates from the crowd model. Deploy stays with the officer.</p>
+        <p className={weaponText.startsWith("Possible") ? "weapon-line" : "quiet-line"}>{weapon?.note && weapon.finding.type === "weapon" && weapon.finding.kind === "none" ? "Weapon model not loaded" : weaponText}</p>
+        <p className="sample-note">{crowd?.note ?? "Sample finding. The count updates from the crowd model. Deploy stays with the officer."}</p>
       </div>
     );
   }
   if (incident.kind === "accident") {
+    const accident = events.find((event) => event.finding.type === "accident");
+    const crash = accident?.finding.type === "accident" ? accident.finding.crash : true;
     return (
       <div className="finding">
-        <p className="count-hero crash">Crash</p>
-        <p className="sample-note">Sample finding from the accident model. Deploy ambulance records the order on this screen.</p>
-        <svg viewBox="0 0 640 120" className="still-svg" role="img" aria-label="Sample road picture with two vehicles stopped across the lane">
-          <rect width="640" height="120" fill="#0e141b" />
-          <rect x="40" y="36" width="560" height="48" fill="#3a4656" />
-          <rect x="250" y="46" width="70" height="28" fill="#d7dee8" />
-          <rect x="330" y="50" width="64" height="26" fill="#e7b3a8" transform="rotate(12 362 63)" />
-          <text x="16" y="110" fill="#c5d0dc" fontSize="13">Sample still · Road camera 1 · no city camera connected</text>
-        </svg>
+        <ClipOrStill clipUrl={clipUrl} />
+        <p className="count-hero crash">{crash === null ? "Not decided" : crash ? "Crash" : "No crash"}</p>
+        <p className="sample-note">{accident?.note ?? "Sample finding from the accident model. Deploy ambulance records the order on this screen."}</p>
+        {clipUrl ? null : (
+          <svg viewBox="0 0 640 120" className="still-svg" role="img" aria-label="Sample road picture with two vehicles stopped across the lane">
+            <rect width="640" height="120" fill="#0e141b" />
+            <rect x="40" y="36" width="560" height="48" fill="#3a4656" />
+            <rect x="250" y="46" width="70" height="28" fill="#d7dee8" />
+            <rect x="330" y="50" width="64" height="26" fill="#e7b3a8" transform="rotate(12 362 63)" />
+            <text x="16" y="110" fill="#c5d0dc" fontSize="13">Sample still · Road camera 1 · no city camera connected</text>
+          </svg>
+        )}
       </div>
     );
   }
   const traffic = events.find((event) => event.finding.type === "traffic");
   const arms = traffic?.finding.type === "traffic" ? traffic.finding.arms : [];
+  const vehicles = traffic?.finding.type === "traffic" && traffic.finding.basis === "vehicles";
   return (
     <div className="finding">
+      <ClipOrStill clipUrl={local ? clipUrl : null} />
       <ul className="arms">
         {arms.map((arm) => (
           <li key={arm.name}>
             <span>{arm.name}</span>
-            <span className="bar" aria-hidden="true"><i style={{ width: `${Math.min(100, arm.queueMetres)}%` }} /></span>
-            <span>{arm.queueMetres} m</span>
+            <span className="bar" aria-hidden="true"><i style={{ width: `${Math.min(100, vehicles ? (arm.vehicles ?? 0) * 8 : arm.queueMetres)}%` }} /></span>
+            <span>{vehicles ? `${arm.vehicles ?? 0} veh` : `${arm.queueMetres} m`}</span>
             <span>Now {arm.currentGreenSeconds}s</span>
             <span>Plan {arm.greenSeconds}s</span>
           </li>
         ))}
       </ul>
-      <p className="sample-note">Sample finding from the traffic model. Storing the plan does not write to a signal controller.</p>
+      <p className="sample-note">{traffic?.note ?? "Sample finding from the traffic model. Storing the plan does not write to a signal controller."}</p>
     </div>
   );
+}
+
+function ClipOrStill({ clipUrl }: { clipUrl: string | null }) {
+  if (!clipUrl) return null;
+  return <video className="clip review-clip" src={clipUrl} controls playsInline />;
 }
 
 function heading(kind: IncidentRecord["kind"]): string {
@@ -186,9 +202,16 @@ function detailFor(incident: IncidentRecord, events: ModelEvent[]): string {
     const weaponText = weapon?.finding.type === "weapon" ? weaponLabel(weapon.finding.kind) : "";
     return weaponText ? `${count} · ${weaponText}` : count;
   }
-  if (incident.kind === "accident") return "Crash on Road camera 1";
+  if (incident.kind === "accident") {
+    const accident = events.find((event) => event.finding.type === "accident");
+    if (accident?.finding.type === "accident" && accident.finding.crash === null) return "Crash not decided on Road camera 1";
+    return "Crash on Road camera 1";
+  }
   const traffic = events.find((event) => event.finding.type === "traffic");
   if (traffic?.finding.type !== "traffic") return "Signal plan";
+  if (traffic.finding.basis === "vehicles") {
+    return traffic.finding.arms.map((arm) => `${arm.name} ${arm.vehicles ?? 0} vehicles, plan ${arm.greenSeconds}s`).join(", ");
+  }
   return traffic.finding.arms.map((arm) => `${arm.name} ${arm.greenSeconds}s`).join(", ");
 }
 

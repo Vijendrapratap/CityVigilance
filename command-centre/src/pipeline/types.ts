@@ -23,16 +23,17 @@ export type CrowdFinding = { type: "crowd"; count: number };
 
 export type WeaponFinding = { type: "weapon"; kind: "firearm" | "blade" | "none" };
 
-export type AccidentFinding = { type: "accident"; crash: boolean };
+export type AccidentFinding = { type: "accident"; crash: boolean | null };
 
 export type TrafficArm = {
   name: string;
   queueMetres: number;
   currentGreenSeconds: number;
   greenSeconds: number;
+  vehicles?: number;
 };
 
-export type TrafficFinding = { type: "traffic"; arms: TrafficArm[] };
+export type TrafficFinding = { type: "traffic"; arms: TrafficArm[]; basis?: "metres" | "vehicles" };
 
 export type Finding = CrowdFinding | WeaponFinding | AccidentFinding | TrafficFinding;
 
@@ -45,6 +46,9 @@ export type ModelEvent = {
   source: "sample" | "api" | "local";
   strength: "high" | "review";
   finding: Finding;
+  note?: string;
+  detector?: string;
+  device?: string;
 };
 
 export type IncidentKind = "crowd" | "accident" | "traffic";

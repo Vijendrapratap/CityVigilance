@@ -260,6 +260,12 @@ These do not change the diagram. They fill the plugs.
 6. Cloud, on-premises, or a mix, and who may open live video.
 7. The people-count limit that opens a crowd incident, set per place after the first real pictures.
 
+## Departments and clips
+
+The showcase opens on four departments: police, traffic, emergency dispatch, and event security. Each department shows who sits there, what they can record, and what stays with a person. A module is one use case with its own video.
+
+Upload a clip and run that module. The model service (`python -m cityvigilance.server`) samples about one frame a second, up to 12 frames, and runs YOLOv8n on CPU. People and vehicles come from that detector. Weapon and accident modules keep the clip on screen and leave the decision with the officer, because this detector has no weapon class and no crash class. Placing the result on the desk replaces the sample numbers for that camera only.
+
 ## Where the current screen fits
 
 The command centre in `command-centre/` (`cd command-centre && npm run dev`, http://127.0.0.1:5173) is this demo. A sample stream feeds the crowd, weapon, accident, and traffic models. The same sample rules live in the Python package `cityvigilance/`, and `notebooks/` is the bench for testing one model at a time. The map shows a live people count. **Deploy police**, **Deploy ambulance**, and **Accept signal plan** record orders on the incident. Findings are labeled sample. City cameras, a vision API, dispatch, and a signal controller are the same plugs with nothing attached yet. Deployment changes those plugs, not the desk.

@@ -105,11 +105,22 @@ export function incidentSpecs(events: ModelEvent[]): IncidentSpec[] {
       specs.push({ id: `inc-accident-${camera.id}`, cameraId: camera.id, kind: "accident" });
     }
     const traffic = finding(mine, "traffic");
-    if (traffic?.type === "traffic" && traffic.arms.some((arm) => arm.greenSeconds !== arm.currentGreenSeconds)) {
+    if (traffic?.type === "traffic" && trafficOpens(traffic)) {
       specs.push({ id: `inc-traffic-${camera.id}`, cameraId: camera.id, kind: "traffic" });
     }
   }
   return specs;
+}
+
+export function mergeLocal(sample: ModelEvent[], local: ModelEvent[]): ModelEvent[] {
+  const cameras = new Set(local.map((event) => event.cameraId));
+  if (cameras.size === 0) return sample;
+  return [...sample.filter((event) => !cameras.has(event.cameraId)), ...local];
+}
+
+function trafficOpens(traffic: Extract<ModelEvent["finding"], { type: "traffic" }>): boolean {
+  if (traffic.basis === "vehicles") return traffic.arms.some((arm) => (arm.vehicles ?? 0) >= 3);
+  return traffic.arms.some((arm) => arm.greenSeconds !== arm.currentGreenSeconds);
 }
 
 export function displayId(incidentId: string): string {

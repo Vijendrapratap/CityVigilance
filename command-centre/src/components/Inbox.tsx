@@ -98,9 +98,17 @@ function detailLine(cameraId: string, kind: IncidentRecord["kind"], events: Mode
     const weaponText = weapon?.finding.type === "weapon" ? weaponLabel(weapon.finding.kind) : "";
     return weaponText && weaponText !== "No weapon shape" ? `${count} · ${weaponText}` : count;
   }
-  if (kind === "accident") return "Crash reported by the accident model";
+  if (kind === "accident") {
+    const accident = mine.find((event) => event.finding.type === "accident");
+    if (accident?.finding.type === "accident" && accident.finding.crash === null) return "Crash not decided";
+    return "Crash reported by the accident model";
+  }
   const traffic = mine.find((event) => event.finding.type === "traffic");
   if (traffic?.finding.type === "traffic") {
+    if (traffic.finding.basis === "vehicles") {
+      const arm = traffic.finding.arms[0];
+      return arm ? `${arm.name} ${arm.vehicles ?? 0} vehicles · plan ${arm.greenSeconds}s` : "Vehicles";
+    }
     const longest = [...traffic.finding.arms].sort((a, b) => b.queueMetres - a.queueMetres)[0];
     return longest ? `${longest.name} ${longest.queueMetres} m · plan ${longest.greenSeconds}s` : "Queues";
   }

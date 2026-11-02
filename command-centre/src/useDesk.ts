@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useReducer, useState } from "react";
 import { ensureIncidents, hydrateDesk, reduceDesk, type DeskAction } from "./pipeline/desk";
-import { incidentSpecs, publishFrames, runModels } from "./pipeline/sample";
+import { incidentSpecs, mergeLocal, publishFrames, runModels } from "./pipeline/sample";
+import type { ModelEvent } from "./pipeline/types";
 
 const STORAGE_KEY = "cityvigilance.command.v1";
 
@@ -13,12 +14,15 @@ function loadDesk() {
   }
 }
 
-export function useDesk() {
+export function useDesk(localEvents: ModelEvent[] = []) {
   const [sequence, setSequence] = useState(0);
   const [now, setNow] = useState(() => new Date().toISOString());
   const [state, dispatch] = useReducer(reduceDesk, undefined, loadDesk);
 
-  const events = useMemo(() => runModels(publishFrames(sequence, now)).events, [sequence, now]);
+  const events = useMemo(
+    () => mergeLocal(runModels(publishFrames(sequence, now)).events, localEvents),
+    [sequence, now, localEvents],
+  );
   const specs = useMemo(() => incidentSpecs(events), [events]);
 
   useEffect(() => {

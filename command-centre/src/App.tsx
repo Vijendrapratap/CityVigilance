@@ -1,91 +1,106 @@
-import { useState } from "react";
-import { Inbox, type InboxFilter } from "./components/Inbox";
-import { IncidentReview } from "./components/IncidentReview";
-import { LoopStrip, type LoopPhase } from "./components/LoopStrip";
-import { MapPanel } from "./components/MapPanel";
-import { OutcomeLog } from "./components/OutcomeLog";
-import { formatWhen } from "./format";
-import { MODEL_MODES } from "./pipeline/sample";
-import { useDesk } from "./useDesk";
+import { useEffect, useMemo, useState } from "react";
+import { modelHealth, type AnalyzeResult, type ModelHealth } from "./analyzeClient";
+import { MODULES, type DepartmentId } from "./catalog";
+import { DepartmentBoard } from "./components/DepartmentBoard";
+import { DeskScreen } from "./components/DeskScreen";
+import { ModuleStudio } from "./components/ModuleStudio";
+import type { ModelEvent, ModelId } from "./pipeline/types";
+
+type View = { name: "departments" } | { name: "module"; departmentId: DepartmentId; moduleId: ModelId } | { name: "desk" };
+
+type Clip = { url: string; name: string };
 
 export function App() {
-  const desk = useDesk();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<InboxFilter>("open");
-  const selected = selectedId ? (desk.state.incidents[selectedId] ?? null) : null;
-  const order = selectedId ? (desk.state.orders.find((item) => item.incidentId === selectedId) ?? null) : null;
-  const phase: LoopPhase = !selected ? "idle" : selected.status === "open" ? "review" : "recorded";
-  const clock = formatWhen(desk.now);
-  const cameras: Record<string, string> = {};
-  for (const [id, incident] of Object.entries(desk.state.incidents)) cameras[id] = incident.cameraId;
+  const [view, setView] = useState<View>({ name: "departments" });
+  const [health, setHealth] = useState<ModelHealth | null>(null);
+  const [localByCamera, setLocalByCamera] = useState<Record<string, ModelEvent[]>>({});
+  const [clips, setClips] = useState<Record<string, Clip>>({});
+  const [files, setFiles] = useState<Partial<Record<ModelId, File>>>({});
+  const [results, setResults] = useState<Partial<Record<ModelId, AnalyzeResult>>>({});
+  const [focusCameraId, setFocusCameraId] = useState<string | null>(null);
+  const localEvents = useMemo(() => Object.values(localByCamera).flat(), [localByCamera]);
+  const summaries = useMemo(() => {
+    const next: Partial<Record<ModelId, string>> = {};
+    for (const [id, result] of Object.entries(results) as [ModelId, AnalyzeResult][]) next[id] = result.summary;
+    return next;
+  }, [results]);
 
-  function selectCamera(cameraId: string) {
-    const match = Object.entries(desk.state.incidents).find(([, incident]) => incident.cameraId === cameraId);
-    setSelectedId(match?.[0] ?? null);
+  useEffect(() => {
+    let alive = true;
+    void modelHealth().then((next) => {
+      if (alive) setHealth(next);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [view.name]);
+
+  function rememberFile(moduleId: ModelId, file: File) {
+    const cameraId = MODULES[moduleId].cameraId;
+    setFiles((prev) => ({ ...prev, [moduleId]: file }));
+    setClips((prev) => {
+      const previous = prev[cameraId];
+      if (previous) URL.revokeObjectURL(previous.url);
+      return { ...prev, [cameraId]: { url: URL.createObjectURL(file), name: file.name } };
+    });
   }
 
+  function rememberResult(moduleId: ModelId, result: AnalyzeResult) {
+    const cameraId = result.event.cameraId;
+    setResults((prev) => ({ ...prev, [moduleId]: result }));
+    setLocalByCamera((prev) => {
+      const existing = prev[cameraId] ?? [];
+      return { ...prev, [cameraId]: [...existing.filter((event) => event.model !== result.event.model), result.event] };
+    });
+    setFocusCameraId(cameraId);
+  }
+
+  const moduleView = view.name === "module" ? view : null;
+  const moduleInfo = moduleView ? MODULES[moduleView.moduleId] : null;
+
   return (
-    <div className="app">
+    <div className={view.name === "desk" ? "app" : "app app-browse"}>
       <header className="topbar">
         <div className="brand">
           <p className="product">CityVigilance</p>
-          <h1>Command centre</h1>
+          <h1>{view.name === "desk" ? "Command centre" : "Proof of concept"}</h1>
         </div>
-        <p className="slice">Sample stream · four models · screen-only deploy · site not chosen</p>
-        <p className="clock">
-          <span>{clock.time} IST</span>
-          <small>Desk clock · time zone is an assumption</small>
-        </p>
+        <div className="slice">
+          <nav className="nav" aria-label="Showcase">
+            <button type="button" className="ghost" aria-pressed={view.name !== "desk"} onClick={() => setView({ name: "departments" })}>
+              Departments
+            </button>
+            <button type="button" className="ghost" aria-pressed={view.name === "desk"} onClick={() => setView({ name: "desk" })}>
+              Desk
+            </button>
+          </nav>
+          <p>{view.name === "desk" ? "Uploaded clips replace the sample on that camera." : "One module, one clip, one department."}</p>
+        </div>
+        {view.name === "desk" ? null : (
+          <p className="clock">
+            <span>IST</span>
+            <small>Desk clock is on the command view</small>
+          </p>
+        )}
       </header>
-      <LoopStrip phase={phase} />
-      <div className="model-row" aria-label="Model plugs">
-        {(Object.entries(MODEL_MODES) as [string, string][]).map(([model, mode]) => (
-          <span key={model}>
-            {model} · {mode}
-          </span>
-        ))}
-        <span>Dispatch · screen</span>
-        <span>Signals · advice</span>
-      </div>
-      <div className="workspace">
-        <MapPanel
-          events={desk.events}
-          incidents={desk.state.incidents}
-          selectedCameraId={selected?.cameraId ?? null}
-          onSelectCamera={selectCamera}
+      {view.name === "departments" ? <DepartmentBoard health={health} summaries={summaries} onOpen={(departmentId, moduleId) => setView({ name: "module", departmentId, moduleId })} /> : null}
+      {moduleView && moduleInfo ? (
+        <ModuleStudio
+          departmentId={moduleView.departmentId}
+          moduleId={moduleView.moduleId}
+          clipUrl={clips[moduleInfo.cameraId]?.url ?? null}
+          clipName={clips[moduleInfo.cameraId]?.name ?? null}
+          file={files[moduleView.moduleId] ?? null}
+          result={results[moduleView.moduleId] ?? null}
+          onBack={() => setView({ name: "departments" })}
+          onFile={(file) => rememberFile(moduleView.moduleId, file)}
+          onResult={(result) => rememberResult(moduleView.moduleId, result)}
+          onDesk={() => setView({ name: "desk" })}
         />
-        <div className="side">
-          <Inbox
-            incidents={desk.state.incidents}
-            events={desk.events}
-            filter={filter}
-            selectedId={selectedId}
-            onFilter={setFilter}
-            onSelect={setSelectedId}
-          />
-          <IncidentReview
-            incidentId={selectedId}
-            incident={selected}
-            events={desk.events}
-            order={order}
-            onPolice={(detail, note) => selectedId && desk.act({ type: "deploy-police", incidentId: selectedId, detail, note, at: new Date().toISOString() })}
-            onAmbulance={(detail, note) =>
-              selectedId && desk.act({ type: "deploy-ambulance", incidentId: selectedId, detail, note, at: new Date().toISOString() })
-            }
-            onSignal={(detail, note) => selectedId && desk.act({ type: "accept-signal", incidentId: selectedId, detail, note, at: new Date().toISOString() })}
-            onDismiss={(reason, note) => selectedId && desk.act({ type: "dismiss", incidentId: selectedId, reason, note, at: new Date().toISOString() })}
-          />
-        </div>
-      </div>
-      <OutcomeLog
-        orders={desk.state.orders}
-        incidentCameras={cameras}
-        selectedId={selectedId}
-        onOpen={setSelectedId}
-        onReset={desk.reset}
-      />
+      ) : null}
+      {view.name === "desk" ? <DeskScreen localEvents={localEvents} clips={clips} focusCameraId={focusCameraId} /> : null}
       <footer className="footnote">
-        Sample findings from the four demo models. City cameras, a vision API, dispatch, and a signal controller are not connected. IST is the working time-zone assumption.
+        People and vehicles are read on the CPU of this machine from the uploaded clip. Weapon and accident models are not loaded, so those modules leave the decision with the officer. City cameras, a vision API, dispatch, and a signal controller are not connected.
       </footer>
     </div>
   );

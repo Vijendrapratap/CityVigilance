@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { emptyDesk, ensureIncidents, reduceDesk } from "./desk.ts";
-import { incidentSpecs, publishFrames, runModels } from "./sample.ts";
+import { incidentSpecs, mergeLocal, publishFrames, runModels } from "./sample.ts";
 
 const at = "2026-11-01T02:30:00.000Z";
 
@@ -131,4 +131,45 @@ test("dismiss Other requires a note", () => {
     at,
   });
   assert.equal(next.incidents[accident.id]?.status, "dismissed");
+});
+
+test("an uploaded clip replaces the sample on that camera only", () => {
+  const sample = eventsAt(0);
+  const local = {
+    id: "cam-crowd:crowd:clip",
+    cameraId: "cam-crowd",
+    model: "crowd" as const,
+    at,
+    sequence: 0,
+    source: "local" as const,
+    strength: "high" as const,
+    finding: { type: "crowd" as const, count: 7 },
+  };
+  const merged = mergeLocal(sample, [local]);
+  assert.equal(merged.some((event) => event.cameraId === "cam-crowd" && event.source === "sample"), false);
+  const crowd = merged.find((event) => event.model === "crowd");
+  assert.equal(crowd?.finding.type === "crowd" && crowd.finding.count, 7);
+  assert.equal(merged.some((event) => event.model === "accident" && event.source === "sample"), true);
+  const specs = incidentSpecs(merged);
+  assert.equal(specs.some((spec) => spec.kind === "crowd"), false);
+});
+
+test("three vehicles in frame open a traffic incident without pretending to measure metres", () => {
+  const specs = incidentSpecs([
+    {
+      id: "cam-junction:traffic:clip",
+      cameraId: "cam-junction",
+      model: "traffic",
+      at,
+      sequence: 0,
+      source: "local",
+      strength: "high",
+      finding: {
+        type: "traffic",
+        basis: "vehicles",
+        arms: [{ name: "In view", queueMetres: 0, vehicles: 3, currentGreenSeconds: 20, greenSeconds: 10 }],
+      },
+    },
+  ]);
+  assert.equal(specs.some((spec) => spec.kind === "traffic"), true);
 });

@@ -16,7 +16,7 @@ export function MapPanel({
     <section className="panel map-panel" aria-label="Command map">
       <header className="panel-head">
         <h2>Command map</h2>
-        <p>Sample cameras. No city is selected.</p>
+        <p>No city is selected. A clip replaces the sample on that camera.</p>
       </header>
       <div className="map-stage">
         <div className="map-frame">
@@ -75,10 +75,16 @@ function liveLabel(cameraId: string, events: ModelEvent[]): string {
       weapon?.finding.type === "weapon" && weapon.finding.kind !== "none" ? ` · ${weaponLabel(weapon.finding.kind)}` : "";
     return `${crowd.finding.count} people${weaponText}`;
   }
+  if (weapon?.finding.type === "weapon" && weapon.note) return "Weapon not decided";
   const accident = mine.find((event) => event.finding.type === "accident");
   if (accident?.finding.type === "accident" && accident.finding.crash) return "Accident";
+  if (accident?.finding.type === "accident" && accident.finding.crash === null) return "Crash not decided";
   const traffic = mine.find((event) => event.finding.type === "traffic");
   if (traffic?.finding.type === "traffic") {
+    if (traffic.finding.basis === "vehicles") {
+      const vehicles = traffic.finding.arms.reduce((sum, arm) => sum + (arm.vehicles ?? 0), 0);
+      return `${vehicles} vehicles`;
+    }
     const longest = [...traffic.finding.arms].sort((a, b) => b.queueMetres - a.queueMetres)[0];
     return longest ? `${longest.name} queue ${longest.queueMetres} m` : "Queues";
   }
